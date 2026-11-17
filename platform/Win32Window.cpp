@@ -19,6 +19,7 @@ constexpr UINT kTrayIconId = 1;
 constexpr UINT kTrayCallbackMessage = WM_APP + 1;
 constexpr UINT kMenuToggleHotkeyId = 1;
 constexpr UINT kExitHotkeyId = 2;
+constexpr UINT kTrayOpenCommand = 1000;
 constexpr UINT kTrayExitCommand = 1001;
 }
 
@@ -27,8 +28,15 @@ Win32Window::~Win32Window()
 	Shutdown();
 }
 
-bool Win32Window::Initialize(HINSTANCE instance, int width, int height, const wchar_t* title)
+bool Win32Window::Initialize(HINSTANCE instance, const WindowConfig& config)
 {
+	config_ = config;
+	menuToggleKey_ = config.menuToggleKey;
+	exitKey_ = config.exitKey;
+
+	// A size of 0 means "use the full screen".
+	const int width = config.width > 0 ? config.width : GetSystemMetrics(SM_CXSCREEN);
+	const int height = config.height > 0 ? config.height : GetSystemMetrics(SM_CYSCREEN);
 	width_ = static_cast<UINT>(width);
 	height_ = static_cast<UINT>(height);
 
@@ -44,10 +52,20 @@ bool Win32Window::Initialize(HINSTANCE instance, int width, int height, const wc
 		return false;
 	}
 
+	DWORD extendedStyle = WS_EX_TOOLWINDOW;
+	if (config.alwaysOnTop)
+	{
+		extendedStyle |= WS_EX_TOPMOST;
+	}
+	if (config.transparent)
+	{
+		extendedStyle |= WS_EX_LAYERED;
+	}
+
 	handle_ = CreateWindowExW(
-		WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
+		extendedStyle,
 		kWindowClassName,
-		title,
+		config.title,
 		WS_POPUP,
 		0,
 		0,
@@ -63,9 +81,18 @@ bool Win32Window::Initialize(HINSTANCE instance, int width, int height, const wc
 		return false;
 	}
 
-	SetLayeredWindowAttributes(handle_, RGB(0, 0, 0), 0, LWA_COLORKEY);
+	if (config.transparent)
+	{
+		SetLayeredWindowAttributes(handle_, config.transparentColor, 0, LWA_COLORKEY);
+	}
 
-	if (!RegisterHotkeys() || !CreateTrayIcon())
+	if (!RegisterHotkeys())
+	{
+		Shutdown();
+		return false;
+	}
+
+	if (config.showTrayIcon && !CreateTrayIcon())
 	{
 		Shutdown();
 		return false;
@@ -126,7 +153,7 @@ bool Win32Window::CreateTrayIcon()
 	trayIcon_.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 	trayIcon_.uCallbackMessage = kTrayCallbackMessage;
 	trayIcon_.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
-	wcscpy_s(trayIcon_.szTip, L"ImGui Base");
+	wcscpy_s(trayIcon_.szTip, config_.trayTooltip);
 
 	trayIconAdded_ = Shell_NotifyIconW(NIM_ADD, &trayIcon_) == TRUE;
 	return trayIconAdded_;
@@ -141,6 +168,13 @@ void Win32Window::RemoveTrayIcon()
 
 	Shell_NotifyIconW(NIM_DELETE, &trayIcon_);
 	trayIconAdded_ = false;
+}
+
+bool Win32Window::ConsumeOpenRequest()
+{
+	const bool requested = openRequested_;
+	openRequested_ = false;
+	return requested;
 }
 
 void Win32Window::UnregisterHotkeys()
@@ -178,18 +212,42 @@ bool Win32Window::ConsumeKeyPress(UINT& key)
 	return true;
 }
 
-void Win32Window::SetMenuToggleKey(UINT key)
+bool Win32Window::SetMenuToggleKey(UINT key)
 {
+	if (!handle_ || key == menuToggleKey_)
+	{
+		return true;
+	}
+
+	const UINT previousKey = menuToggleKey_;
 	UnregisterHotKey(handle_, kMenuToggleHotkeyId);
-	menuToggleKey_ = key;
-	RegisterHotKey(handle_, kMenuToggleHotkeyId, MOD_NOREPEAT, menuToggleKey_);
+	if (RegisterHotKey(handle_, kMenuToggleHotkeyId, MOD_NOREPEAT, key))
+	{
+		menuToggleKey_ = key;
+		return true;
+	}
+
+	RegisterHotKey(handle_, kMenuToggleHotkeyId, MOD_NOREPEAT, previousKey);
+	return false;
 }
 
-void Win32Window::SetExitKey(UINT key)
+bool Win32Window::SetExitKey(UINT key)
 {
+	if (!handle_ || key == exitKey_)
+	{
+		return true;
+	}
+
+	const UINT previousKey = exitKey_;
 	UnregisterHotKey(handle_, kExitHotkeyId);
-	exitKey_ = key;
-	RegisterHotKey(handle_, kExitHotkeyId, MOD_NOREPEAT, exitKey_);
+	if (RegisterHotKey(handle_, kExitHotkeyId, MOD_NOREPEAT, key))
+	{
+		exitKey_ = key;
+		return true;
+	}
+
+	RegisterHotKey(handle_, kExitHotkeyId, MOD_NOREPEAT, previousKey);
+	return false;
 }
 
 bool Win32Window::ProcessMessages()
@@ -263,6 +321,7 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND window, UINT message, WPARAM wPara
 			(lParam == WM_RBUTTONUP || lParam == WM_CONTEXTMENU))
 		{
 			HMENU menu = CreatePopupMenu();
+			AppendMenuW(menu, MF_STRING, kTrayOpenCommand, L"Open");
 			AppendMenuW(menu, MF_STRING, kTrayExitCommand, L"Exit");
 
 			POINT cursorPosition{};
@@ -278,6 +337,10 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND window, UINT message, WPARAM wPara
 				nullptr);
 			DestroyMenu(menu);
 			PostMessageW(window, WM_NULL, 0, 0);
+		}
+		else if (message == WM_COMMAND && LOWORD(wParam) == kTrayOpenCommand)
+		{
+			instance->openRequested_ = true;
 		}
 		else if (message == WM_COMMAND && LOWORD(wParam) == kTrayExitCommand)
 		{

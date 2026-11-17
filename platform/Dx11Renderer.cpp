@@ -2,20 +2,24 @@
 
 #include "../third_party/ImGui/imgui.h"
 #include "../third_party/ImGui/backends/imgui_impl_dx11.h"
-#include "../third_party/ImGui/backends/imgui_impl_win32.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 
 namespace platform
 {
-namespace
+Dx11Renderer::~Dx11Renderer()
 {
-constexpr float kClearColor[] = { 0.00f, 0.00f, 0.00f, 1.00f };
+	Shutdown();
 }
 
-bool Dx11Renderer::Initialize(HWND window, UINT width, UINT height)
+bool Dx11Renderer::Initialize(HWND window, UINT width, UINT height, const float clearColor[4])
 {
+	for (int i = 0; i < 4; ++i)
+	{
+		clearColor_[i] = clearColor[i];
+	}
+
 	DXGI_SWAP_CHAIN_DESC swapChainDescription{};
 	swapChainDescription.BufferCount = 2;
 	swapChainDescription.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -50,20 +54,9 @@ bool Dx11Renderer::Initialize(HWND window, UINT width, UINT height)
 		return false;
 	}
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	ImGui::StyleColorsDark();
-	if (!ImGui_ImplWin32_Init(window))
-	{
-		ImGui::DestroyContext();
-		return false;
-	}
-
+	// The ImGui context must already exist (see ImGuiSetup).
 	if (!ImGui_ImplDX11_Init(device_.Get(), context_.Get()))
 	{
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
 		return false;
 	}
 
@@ -75,8 +68,6 @@ bool Dx11Renderer::Initialize(HWND window, UINT width, UINT height)
 void Dx11Renderer::BeginFrame()
 {
 	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
 }
 
 void Dx11Renderer::RenderFrame()
@@ -89,7 +80,7 @@ void Dx11Renderer::RenderFrame()
 	ImGui::Render();
 
 	context_->OMSetRenderTargets(1, renderTarget_.GetAddressOf(), nullptr);
-	context_->ClearRenderTargetView(renderTarget_.Get(), kClearColor);
+	context_->ClearRenderTargetView(renderTarget_.Get(), clearColor_);
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -118,8 +109,6 @@ void Dx11Renderer::Shutdown()
 	if (imguiInitialized_)
 	{
 		ImGui_ImplDX11_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
 		imguiInitialized_ = false;
 	}
 

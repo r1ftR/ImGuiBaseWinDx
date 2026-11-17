@@ -6,27 +6,33 @@ namespace ui
 {
 namespace
 {
-void RenderKeyBind(UiState& state, const char* name, unsigned int key, KeyBindTarget target)
+void RenderFeatureOption(FeatureOption& feature, int index)
 {
-	ImGui::Text("%s", name);
-	ImGui::SameLine(180.0f);
+	ImGui::PushID(index);
+	ImGui::Checkbox(feature.name.c_str(), &feature.enabled);
+	if (ImGui::BeginPopupContextItem("Settings"))
+	{
+		ImGui::Text("%s settings", feature.name.c_str());
+		if (feature.waitingForKey)
+		{
+			ImGui::Text("Press a key...");
+		}
+		else if (ImGui::Button("Bind key"))
+		{
+			feature.waitingForKey = true;
+		}
 
-	const char* buttonLabel = target == KeyBindTarget::MenuToggle
-		? "Bind##MenuToggle"
-		: "Bind##Exit";
-	if (ImGui::Button(buttonLabel))
-	{
-		state.waitingForKey = target;
+		ImGui::Text("Key: %u", feature.toggleKey);
+		ImGui::EndPopup();
 	}
+	ImGui::PopID();
+}
 
-	ImGui::SameLine(250.0f);
-	if (state.waitingForKey == target)
+void RenderExitButton(UiState& state)
+{
+	if (ImGui::Button("Exit process"))
 	{
-		ImGui::Text("Press a key...");
-	}
-	else
-	{
-		ImGui::Text("Key: %u", key);
+		state.exitRequested = true;
 	}
 }
 }
@@ -44,14 +50,18 @@ void MainPanel::Render(UiState& state)
 		{
 			if (ImGui::BeginTabItem("Config"))
 			{
-				RenderKeyBind(state, "Menu toggle", state.menuToggleKey, KeyBindTarget::MenuToggle);
-				RenderKeyBind(state, "Exit", state.exitKey, KeyBindTarget::Exit);
+				ImGui::Text("Right-click a feature for settings.");
+				RenderFeatureOption(state.menuToggle, -1);
+				RenderExitButton(state);
 				ImGui::EndTabItem();
 			}
 
 			if (ImGui::BeginTabItem("Functionality"))
 			{
-				ImGui::Text("Functionality controls will be added here.");
+				for (int index = 0; index < static_cast<int>(state.features.size()); ++index)
+				{
+					RenderFeatureOption(state.features[index], index);
+				}
 				ImGui::EndTabItem();
 			}
 

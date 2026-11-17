@@ -14,7 +14,7 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
-<ItemGroup>
+  <ItemGroup>
     <Filter Include="Third-Party">
       <UniqueIdentifier>{a7f21c45-6e9a-4b3b-9a7f-1e4f2c8d6b10}</UniqueIdentifier>
     </Filter>
@@ -29,27 +29,76 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="app\Application.cpp"><Filter>Source Files</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\imgui.cpp"><Filter>Third-Party\ImGui</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\imgui_demo.cpp"><Filter>Third-Party\ImGui</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\imgui_draw.cpp"><Filter>Third-Party\ImGui</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\imgui_tables.cpp"><Filter>Third-Party\ImGui</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\imgui_widgets.cpp"><Filter>Third-Party\ImGui</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\backends\imgui_impl_dx11.cpp"><Filter>Third-Party\ImGui\Backends</Filter></ClCompile>
-    <ClCompile Include="third_party\ImGui\backends\imgui_impl_win32.cpp"><Filter>Third-Party\ImGui\Backends</Filter></ClCompile>
+    <ClCompile Include="app\Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\imgui.cpp">
+      <Filter>Third-Party\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\imgui_demo.cpp">
+      <Filter>Third-Party\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\imgui_draw.cpp">
+      <Filter>Third-Party\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\imgui_tables.cpp">
+      <Filter>Third-Party\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\imgui_widgets.cpp">
+      <Filter>Third-Party\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\backends\imgui_impl_dx11.cpp">
+      <Filter>Third-Party\ImGui\Backends</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui\backends\imgui_impl_win32.cpp">
+      <Filter>Third-Party\ImGui\Backends</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\MainPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\Win32Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\Dx11Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\ImGuiSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app\Application.h"><Filter>Header Files</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imconfig.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imgui.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imgui_internal.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imstb_rectpack.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imstb_textedit.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\imstb_truetype.h"><Filter>Third-Party\ImGui</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\backends\imgui_impl_dx11.h"><Filter>Third-Party\ImGui\Backends</Filter></ClInclude>
-    <ClInclude Include="third_party\ImGui\backends\imgui_impl_win32.h"><Filter>Third-Party\ImGui\Backends</Filter></ClInclude>
+    <ClInclude Include="app\Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\MainPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UiPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UiState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\Win32Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\Dx11Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\WindowConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\ImGuiSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="third_party\DirectX\README.md"><Filter>Third-Party\DirectX</Filter></None>
+    <None Include=".gitignore" />
   </ItemGroup>
 </Project>
