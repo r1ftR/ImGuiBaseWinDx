@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app\Application.h" />
+    <ClInclude Include="app\AppModule.h" />
     <ClInclude Include="platform\ImGuiSetup.h" />
     <ClInclude Include="platform\Renderer.h" />
     <ClInclude Include="platform\WindowConfig.h" />

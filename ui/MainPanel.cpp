@@ -44,24 +44,20 @@ void MainPanel::Render(UiState& state)
 		return;
 	}
 
-	if (ImGui::Begin("ImGui Base"))
+	if (ImGui::Begin(title.c_str()))
 	{
 		if (ImGui::BeginTabBar("MainTabs"))
 		{
+			if (renderTabs)
+			{
+				renderTabs(state);
+			}
+
 			if (ImGui::BeginTabItem("Config"))
 			{
 				ImGui::Text("Right-click a feature for settings.");
 				RenderFeatureOption(state.menuToggle, -1);
 				RenderExitButton(state);
-				ImGui::EndTabItem();
-			}
-
-			if (ImGui::BeginTabItem("Functionality"))
-			{
-				for (int index = 0; index < static_cast<int>(state.features.size()); ++index)
-				{
-					RenderFeatureOption(state.features[index], index);
-				}
 				ImGui::EndTabItem();
 			}
 

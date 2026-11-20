@@ -126,7 +126,38 @@ void Win32Window::Show(bool visible)
 	if (visible)
 	{
 		UpdateWindow(handle_);
+		TakeInputFocus();
 	}
+}
+
+void Win32Window::TakeInputFocus()
+{
+	// Games usually hold focus, clip the cursor to their window and hide it.
+	// Become the foreground window so mouse/keyboard input reaches the menu.
+	const HWND foreground = GetForegroundWindow();
+	if (foreground != handle_)
+	{
+		const DWORD foregroundThread = GetWindowThreadProcessId(foreground, nullptr);
+		const DWORD currentThread = GetCurrentThreadId();
+		const bool attached = foregroundThread != 0 && foregroundThread != currentThread &&
+			AttachThreadInput(currentThread, foregroundThread, TRUE);
+
+		BringWindowToTop(handle_);
+		SetForegroundWindow(handle_);
+		SetActiveWindow(handle_);
+		SetFocus(handle_);
+
+		if (attached)
+		{
+			AttachThreadInput(currentThread, foregroundThread, FALSE);
+		}
+	}
+
+	ClipCursor(nullptr);
+	while (ShowCursor(TRUE) < 0)
+	{
+	}
+	SetCursor(LoadCursorW(nullptr, IDC_ARROW));
 }
 
 bool Win32Window::RegisterHotkeys()
@@ -278,6 +309,46 @@ bool Win32Window::ConsumeResize(UINT& width, UINT& height)
 	height = height_;
 	resized_ = false;
 	return true;
+}
+
+void Win32Window::UpdateMouseCapture(bool clickedOutsideUi)
+{
+	if (!handle_ || GetForegroundWindow() != handle_)
+	{
+		// Another window (e.g. the game) has focus; leave the mouse alone.
+		return;
+	}
+
+	if (clickedOutsideUi)
+	{
+		ReleaseCapture();
+
+		// Find the top-level window below the overlay at the cursor position.
+		POINT cursor{};
+		GetCursorPos(&cursor);
+		HWND target = GetWindow(handle_, GW_HWNDNEXT);
+		while (target)
+		{
+			RECT rect{};
+			if (IsWindowVisible(target) && !IsIconic(target) && GetWindowRect(target, &rect) && PtInRect(&rect, cursor))
+			{
+				break;
+			}
+			target = GetWindow(target, GW_HWNDNEXT);
+		}
+
+		if (target)
+		{
+			SetForegroundWindow(target);
+		}
+		return;
+	}
+
+	// Route all mouse input to the overlay, including over transparent pixels.
+	if (GetCapture() != handle_)
+	{
+		SetCapture(handle_);
+	}
 }
 
 LRESULT CALLBACK Win32Window::WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)

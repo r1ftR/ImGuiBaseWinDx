@@ -73,6 +73,9 @@
     <ClInclude Include="app\Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app\AppModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ui\MainPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>

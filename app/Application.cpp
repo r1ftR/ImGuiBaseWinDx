@@ -1,9 +1,13 @@
 #include "Application.h"
 
+#include "AppModule.h"
 #include "../platform/Dx11Renderer.h"
 #include "../platform/ImGuiSetup.h"
 #include "../platform/Win32Window.h"
 #include "../ui/MainPanel.h"
+#include "../third_party/ImGui/imgui.h"
+
+#include <string>
 
 namespace app
 {
@@ -16,18 +20,27 @@ namespace
 platform::WindowConfig MakeWindowConfig()
 {
 	platform::WindowConfig config;
-	config.title = L"ImGui Base";
-	config.trayTooltip = L"ImGui Base";
 	return config;
 }
 
-void RegisterFeatures(ui::UiState& state)
+void RegisterFeatures(ui::UiState&)
 {
 	// Name, starts enabled, toggle key, waiting for key.
-	state.features.push_back({ "Example 1", false, VK_F1, false });
 }
 
 // ---------------------------------------------------------------
+
+std::string ToUtf8(const wchar_t* text)
+{
+	const int length = WideCharToMultiByte(CP_UTF8, 0, text, -1, nullptr, 0, nullptr, nullptr);
+	if (length <= 0)
+	{
+		return {};
+	}
+	std::string result(static_cast<size_t>(length - 1), '\0');
+	WideCharToMultiByte(CP_UTF8, 0, text, -1, result.data(), length, nullptr, nullptr);
+	return result;
+}
 
 // Converts a Win32 color (0-255 per channel) to a renderer color (0.0-1.0).
 void ToClearColor(COLORREF color, float clearColor[4])
@@ -105,7 +118,14 @@ void HandleKeyPress(platform::Win32Window& window, ui::UiState& state)
 
 int Run(HINSTANCE instance)
 {
-	const platform::WindowConfig config = MakeWindowConfig();
+	AppModule none;
+	return Run(instance, none);
+}
+
+int Run(HINSTANCE instance, AppModule& module)
+{
+	platform::WindowConfig config = MakeWindowConfig();
+	module.ConfigureWindow(config);
 
 	platform::Win32Window window;
 	if (!window.Initialize(instance, config))
@@ -132,8 +152,11 @@ int Run(HINSTANCE instance)
 	ui::UiState state;
 	state.menuToggle.toggleKey = config.menuToggleKey;
 	RegisterFeatures(state);
+	module.OnStart(state);
 
 	ui::MainPanel mainPanel;
+	mainPanel.SetTitle(ToUtf8(config.title));
+	mainPanel.SetTabRenderer([&module](ui::UiState& uiState) { module.RenderTabs(uiState); });
 
 	while (window.ProcessMessages())
 	{
@@ -169,6 +192,11 @@ int Run(HINSTANCE instance)
 		renderer.BeginFrame();
 		imgui.BeginFrame();
 		mainPanel.Render(state);
+		module.OnFrame(state);
+
+		// Clicking empty space (not on any ImGui window) gives the mouse back to the game.
+		const bool clickedOutsideUi = ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::GetIO().WantCaptureMouse;
+		window.UpdateMouseCapture(clickedOutsideUi);
 		renderer.RenderFrame();
 
 		if (state.exitRequested)
@@ -183,6 +211,7 @@ int Run(HINSTANCE instance)
 		}
 	}
 
+	module.OnShutdown();
 	renderer.Shutdown();
 	imgui.Shutdown();
 	return 0;

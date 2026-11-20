@@ -29,7 +29,13 @@ public:
 	const WindowConfig& GetConfig() const { return config_; }
 	bool ConsumeResize(UINT& width, UINT& height);
 
+	// Call once per frame while the menu is visible.
+	// Keeps mouse input on the overlay so the game underneath doesn't react to hovering.
+	// A click outside the UI hands focus to the window under the cursor.
+	void UpdateMouseCapture(bool clickedOutsideUi);
+
 private:
+	void TakeInputFocus();
 	bool RegisterHotkeys();
 	bool CreateTrayIcon();
 	void RemoveTrayIcon();
